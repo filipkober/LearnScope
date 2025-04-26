@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { PlusIcon, MoreVerticalIcon, FileTextIcon, CameraIcon, TrashIcon, FileIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Sample template data (would come from backend in real app)
 
@@ -49,11 +49,77 @@ export default function Page() {
     const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [templates, setTemplates] = useState(sampleTemplates);
+    const [selectedTab, setSelectedTab] = useState<"text" | "pdf" | "photo">("text");
+    const [description, setDescription] = useState("");
+    const [name, setName] = useState("");
+    const [file, setFile] = useState<File | null>(null);
 
-    const handleDeleteTemplate = (id: string) => {
+    const handleDeleteTemplate = async (id: string) => {
+
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/templates/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+            }
+        });
+
         setTemplates(templates.filter(template => template.id !== id));
         setShowDeleteConfirm(false);
     };
+
+    const handleCreateTemplateText = async (name: string, description: string) => {
+        const newTemplate = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/templates/text`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+            },
+            body: JSON.stringify({ name, description })
+        }).then(res => res.json());
+        setTemplates([...templates, newTemplate]);
+    }
+    const handleCreateTemplatePDF = async (name: string, file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("name", name);
+
+        const newTemplate = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/templates/pdf`, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+            }
+        }).then(res => res.json());
+        setTemplates([...templates, newTemplate]);
+    }
+    const handleCreateTemplatePhoto = async (name: string, file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("name", name);
+
+        const newTemplate = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/templates/photo`, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+            }
+        }).then(res => res.json());
+        setTemplates([...templates, newTemplate]);
+    }
+
+    useEffect(() => {
+        const fetchTemplates = async () => {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/templates`, {
+
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+                }
+            });
+            const data = await response.json();
+            setTemplates(data);
+        }
+        fetchTemplates();
+    }, []);
 
     return (
         <div className="p-6 space-y-8">
@@ -78,7 +144,7 @@ export default function Page() {
                             </DialogDescription>
                         </DialogHeader>
                         
-                        <Tabs defaultValue="text" className="w-full mt-4">
+                        <Tabs defaultValue="text" className="w-full mt-4" onValueChange={(v) => setSelectedTab(v as "text" | "pdf" | "photo")}>
                             <TabsList className="grid grid-cols-3 w-full">
                                 <TabsTrigger value="text">Text Description</TabsTrigger>
                                 <TabsTrigger value="pdf">Upload PDF</TabsTrigger>
@@ -91,6 +157,8 @@ export default function Page() {
                                         type="text" 
                                         placeholder="Enter a name for this template" 
                                         className="w-full p-2 rounded-md border"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
                                     />
                                 </div>
                                 <div>
@@ -98,6 +166,8 @@ export default function Page() {
                                     <Textarea 
                                         placeholder="Describe the topics, concepts, and knowledge areas that should be covered in this exam template..." 
                                         className="min-h-[150px]"
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
                                     />
                                 </div>
                                 <p className="text-xs text-muted-foreground">
@@ -115,7 +185,13 @@ export default function Page() {
                                             </p>
                                             <p className="text-xs text-muted-foreground">PDF (MAX. 10MB)</p>
                                         </div>
-                                        <input type="file" className="hidden" accept=".pdf" />
+                                        <input type="file" className="hidden" accept=".pdf" onChange={
+                                            (e) => {
+                                                if (e.target.files && e.target.files[0]) {
+                                                    setFile(e.target.files[0]);
+                                                }
+                                            }
+                                        } />
                                     </label>
                                 </div>
                                 <div>
@@ -124,6 +200,8 @@ export default function Page() {
                                         type="text" 
                                         placeholder="Enter a name for this template" 
                                         className="w-full p-2 rounded-md border"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
                                     />
                                 </div>
                             </TabsContent>
@@ -138,7 +216,15 @@ export default function Page() {
                                             </p>
                                             <p className="text-xs text-muted-foreground">JPG, PNG (MAX. 5MB)</p>
                                         </div>
-                                        <input type="file" className="hidden" accept="image/*" />
+                                        <input type="file" className="hidden" accept="image/*" 
+                                            onChange={
+                                                (e) => {
+                                                    if (e.target.files && e.target.files[0]) {
+                                                        setFile(e.target.files[0]);
+                                                    }
+                                                }
+                                            }
+                                        />
                                     </label>
                                 </div>
                                 <div>
@@ -147,6 +233,8 @@ export default function Page() {
                                         type="text" 
                                         placeholder="Enter a name for this template" 
                                         className="w-full p-2 rounded-md border"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
                                     />
                                 </div>
                             </TabsContent>
@@ -154,7 +242,20 @@ export default function Page() {
                         
                         <DialogFooter>
                             <Button variant="outline">Cancel</Button>
-                            <Button>Create Template</Button>
+                            <Button onClick={
+                                async () => {
+                                    if (selectedTab === "text") {
+                                        await handleCreateTemplateText(name, description);
+                                    } else if (selectedTab === "pdf" && file) {
+                                        await handleCreateTemplatePDF(name, file);
+                                    } else if (selectedTab === "photo" && file) {
+                                        await handleCreateTemplatePhoto(name, file);
+                                    }
+                                    setName("");
+                                    setDescription("");
+                                    setFile(null);
+                                }
+                            }>Create Template</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

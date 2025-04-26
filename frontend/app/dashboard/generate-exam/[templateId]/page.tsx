@@ -16,28 +16,6 @@ type Template = {
     topics: string[];
 };
 
-// In a real app, this data would come from your API
-const sampleTemplates = [
-    {
-        id: "1",
-        name: "Computer Science Fundamentals",
-        description: "Core concepts in programming, algorithms, and data structures",
-        topics: ["Data Structures", "Algorithms", "Object-Oriented Programming", "Time Complexity"]
-    },
-    {
-        id: "2",
-        name: "Advanced Mathematics",
-        description: "Calculus, linear algebra, and differential equations",
-        topics: ["Calculus", "Linear Algebra", "Differential Equations", "Vector Calculus"]
-    },
-    {
-        id: "3",
-        name: "Software Engineering Practices",
-        description: "Software development methodologies and best practices",
-        topics: ["Agile Development", "Design Patterns", "Testing Methodologies", "DevOps"]
-    }
-];
-
 export default function GenerateExamPage() {
     const { templateId } = useParams<{ templateId: string }>();
     const router = useRouter();
@@ -54,13 +32,13 @@ export default function GenerateExamPage() {
         // Simulating API call to fetch template details
         const fetchTemplate = async () => {
             try {
-                // In a real app, fetch from API
-                const found = sampleTemplates.find(t => t.id === templateId);
-                if (found) {
-                    setTemplate(found);
-                    // By default, select all topics
-                    setSelectedTopics(found.topics);
+                const data = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/templates/${templateId}`);
+                if (!data.ok) {
+                    throw new Error("Failed to fetch template");
                 }
+                const templateData = await data.json();
+                setTemplate(templateData);
+                setSelectedTopics(templateData.topics); // Pre-select all topics
             } catch (error) {
                 console.error("Failed to fetch template:", error);
             } finally {
@@ -90,16 +68,28 @@ export default function GenerateExamPage() {
         try {
             // In a real app, make API call to generate the exam
             // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Generate a unique exam ID
-            const examId = `exam-${Date.now()}`;
-            
-            // Pretend we've created the exam successfully
-            toast.success("Exam created successfully!");
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/generate-exam`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
+                },
+                body: JSON.stringify({
+                    templateId,
+                    difficulty,
+                    questionCount,
+                    timeLimit,
+                    selectedTopics,
+                }),
+            });
+            if (!response.ok) {
+                throw new Error("Failed to generate exam");
+            }
+            const examData = await response.json();
+            console.log("Generated Exam Data:", examData);
             
             // Redirect to the newly created exam
-            router.push(`/dashboard/exams/${examId}`);
+            router.push(`/dashboard/exams/${examData.id}`);
         } catch (error) {
             console.error("Failed to generate exam:", error);
             toast.error("Failed to generate exam. Please try again.");

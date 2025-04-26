@@ -25,7 +25,7 @@ type TemplatePerformanceData = {
 const templatePerformanceData: TemplatePerformanceData[] = [
     {
         id: "1",
-        name: "Computer Science Fundamentals",
+        name: "Computer Science Fundamentals (sample)",
         overallScore: 72,
         questionsAttempted: 45,
         topicPerformance: [
@@ -37,7 +37,7 @@ const templatePerformanceData: TemplatePerformanceData[] = [
     },
     {
         id: "2",
-        name: "Advanced Mathematics",
+        name: "Advanced Mathematics (sample)",
         overallScore: 68,
         questionsAttempted: 36,
         topicPerformance: [
@@ -49,7 +49,7 @@ const templatePerformanceData: TemplatePerformanceData[] = [
     },
     {
         id: "3",
-        name: "Software Engineering Practices",
+        name: "Software Engineering Practices (sample)",
         overallScore: 80,
         questionsAttempted: 25,
         topicPerformance: [
