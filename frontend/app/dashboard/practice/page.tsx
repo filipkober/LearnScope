@@ -68,7 +68,6 @@ export default function PracticePage() {
     const [selectedTopic, setSelectedTopic] = useState("");
     const [questionDifficulty, setQuestionDifficulty] = useState("medium");
     const [questionGenerated, setQuestionGenerated] = useState(false);
-    const [questionType, setQuestionType] = useState<"open" | "closed">("closed");
     const [availableTopics, setAvailableTopics] = useState<string[]>([]);
     const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
 
@@ -86,7 +85,6 @@ export default function PracticePage() {
         // In a real app, this would make an API call to generate a question
         // Randomly choose between open and closed question types
         const questionType = Math.random() > 0.5 ? "open" : "closed";
-        setQuestionType(questionType);
         
         // Create a copy of the sample question with the selected topic and difficulty
         const questionWithMeta = {

@@ -16,6 +16,7 @@ class Stat(db.Model):
 
 class Template(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(80))
     topics = db.Column(db.String(200), nullable=False)  # Could be JSON or comma-separated
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     stats = db.relationship('Stat', backref='template', lazy=True)
@@ -23,15 +24,17 @@ class Template(db.Model):
 
 class Exam(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    template_id = db.Column(db.Integer, db.ForeignKey('template.id'), nullable=False)
-    questions = db.relationship('Question', backref='exam', lazy=True)
+    subject = db.Column(db.Text, db.ForeignKey('template.id'), nullable=False)
+    questions = db.Column(db.Text, nullable=False)  # JSON string for questions
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String(10), nullable=False)  # "open" or "closed"
     answer = db.Column(db.Text, nullable=False)
+    points = db.Column(db.Integer, nullable=False)
     topic = db.Column(db.String(100), nullable=False)
-    options = db.Column(db.Text, nullable=True)  # JSON string for closed questions
+    options = db.Column(db.Text, nullable=False)  # JSON string for closed questions
+    solution = db.Column(db.Text, nullable=False)  # JSON string for closed questions
     exam_id = db.Column(db.Integer, db.ForeignKey('exam.id'), nullable=False)
     
 class TokenBlocklist(db.Model):

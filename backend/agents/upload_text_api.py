@@ -10,6 +10,8 @@ from agents import (
 class Zagadnienie(BaseModel):
     id: int = Field(..., description="Numer zadania")
     description: str = Field(..., description="Zagadnienie zadania")
+    przedmiot: str = Field(..., description="Przedmiot zadania (matematyka, fizyka, chemia, itp.)")
+
 class ListaZagadnien(BaseModel):
     ListaZagadnien: list[Zagadnienie] = Field(..., description="Lista zadań")
     class Config:

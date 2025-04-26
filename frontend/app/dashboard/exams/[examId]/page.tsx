@@ -146,7 +146,7 @@ export default function ExamPage() {
     }
   };
 
-  const handleAnswerSubmit = (answerId: string, isCorrect: boolean) => {
+  const handleAnswerSubmit = (answerId: string) => {
     if (exam) {
       setAnswers({
         ...answers,
