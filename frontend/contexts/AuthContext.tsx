@@ -1,105 +1,100 @@
-'use client';
+"use client";
 
-import { createContext, useState, useContext, useEffect, ReactNode, JSX } from 'react';
-import { 
-  getAuthToken, 
-  isAuthenticated as checkIsAuthenticated 
-} from '@/utils/auth';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getAuthToken, removeAuthToken, isAuthenticated as checkAuth } from '@/utils/auth';
+import { useRouter } from 'next/navigation';
 
-// Define user type
-interface User {
-  Username: string;
-  Email: string;
+type User = {
+  id: string;
+  username: string;
+  email: string;
 }
 
-// Define auth context type
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  loading: boolean;
   logout: () => void;
-  refreshAuthState: () => Promise<void>;
+  updateUser: (userData: User) => void;
+  checkAuthentication: () => Promise<void>;
 }
 
-// Default context values
-const defaultAuthContext: AuthContextType = {
+const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   user: null,
-  loading: true,
   logout: () => {},
-  refreshAuthState: async () => {},
-};
+  updateUser: () => {},
+  checkAuthentication: () => Promise.resolve(),
+});
 
-// Create context
-const AuthContext = createContext<AuthContextType>(defaultAuthContext);
-
-// Auth provider props
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-// Auth provider component
-export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
 
-  // Function to logout user
-  const logout = (): void => {
-    setIsAuthenticated(false);
-    setUser(null);
-  };
+  const checkAuthentication = useCallback( async () => {
+    const authStatus = checkAuth();
+    setIsAuthenticated(authStatus);
 
-  // Function to refresh authentication state
-  const refreshAuthState = async (): Promise<void> => {
-    setLoading(true);
-    
-    const authenticated = checkIsAuthenticated();
-    setIsAuthenticated(authenticated);
-
-    if (authenticated) {
+    if (authStatus) {
       try {
-        // Fetch user profile data
+        // Fetch user data if authenticated
         const response = await fetch('/api/profile', {
           headers: {
-            'Authorization': `Bearer ${getAuthToken()}`,
-          },
+            'Authorization': `Bearer ${getAuthToken()}`
+          }
         });
-
+        
         if (response.ok) {
-          const userData = await response.json() as User;
+          const userData = await response.json();
           setUser(userData);
         } else {
-          // If token is invalid, logout
-          logout();
+          // If unable to fetch user data, logout
+          handleLogout();
         }
       } catch (error) {
-        console.error('Failed to fetch user data', error);
-        setIsAuthenticated(false);
-        setUser(null);
+        console.error('Failed to fetch user data:', error);
       }
     }
+  },[]);
 
-    setLoading(false);
+  // Check authentication status on initial load
+  useEffect(() => {
+    checkAuthentication();
+  }, [checkAuthentication]);
+
+  const handleLogout = async () => {
+    try {
+      // Call the logout API endpoint
+      await fetch('/api/logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${getAuthToken()}`
+        }
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      // Clear tokens regardless of server response
+      removeAuthToken();
+      setIsAuthenticated(false);
+      setUser(null);
+      
+      // Redirect to login page
+      router.push('/login');
+    }
   };
 
-  // Check authentication status on mount
-  useEffect(() => {
-    refreshAuthState();
-  }, []);
+  const updateUser = (userData: User) => {
+    setUser(userData);
+  };
 
   return (
-    <AuthContext.Provider value={{
-      isAuthenticated,
-      user,
-      loading,
-      logout,
-      refreshAuthState,
-    }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, logout: handleLogout, updateUser, checkAuthentication }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-// Custom hook to use the auth context
-export const useAuth = (): AuthContextType => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext);
+
+export default AuthContext;

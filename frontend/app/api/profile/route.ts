@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
 interface ProfileResponse {
-  Username?: string;
-  Email?: string;
+  username?: string;
+  email?: string;
   message?: string;
 }
 
