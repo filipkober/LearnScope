@@ -7,6 +7,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Skeleton } from "@/components/ui/skeleton";
 import { Question as QuestionComponent, Question } from "@/components/Question";
 import { Progress } from "@/components/ui/progress";
+import { getAuthToken } from "@/utils/auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Exam {
   id: string;
@@ -16,89 +18,129 @@ interface Exam {
   questions: Question[];
 }
 
-// Mock function to simulate fetching an exam from an API
+// Function to fetch exam from the backend API
 const fetchExam = async (examId: string): Promise<Exam> => {
-  // In a real app, this would be an API call
-  // Simulating network delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  try {
+    // Get the token using the authentication utility
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Authentication token not found');
+    }
 
-  // Sample data
-  return {
-    id: examId,
-    title: "Computer Science Fundamentals",
-    description: "Test your knowledge of basic computer science concepts",
-    estimatedTime: "45 minutes",
-    questions: [
-      {
-        id: "q1",
-        type: "closed",
-        question: "Which data structure follows the First In First Out (FIFO) principle?",
-        options: [
-          { id: "a", text: "Stack" },
-          { id: "b", text: "Queue" },
-          { id: "c", text: "Tree" },
-          { id: "d", text: "Graph" }
-        ],
-        correctAnswer: "b",
-        explanation: "A Queue follows the First In First Out (FIFO) principle, where the first element added is the first one to be removed.",
-        topic: "Data Structures",
-        difficulty: "easy"
+    // Make the API request
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/exams/${examId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
-      {
-        id: "q2",
-        type: "open",
-        question: "Explain how an array differs from a linked list in terms of memory allocation and access patterns.",
-        correctAnswer: "Arrays allocate memory in contiguous blocks, allowing for constant-time random access but making insertion/deletion expensive. Linked lists allocate memory dynamically with pointers, making insertion/deletion efficient but random access slower.",
-        explanation: "Arrays store elements in contiguous memory locations, which makes them efficient for random access (O(1)) but inefficient for insertions/deletions in the middle (O(n)). Linked lists store elements in nodes that point to the next node, making insertions/deletions efficient (O(1) if you have a pointer to the position) but random access inefficient (O(n)).",
-        topic: "Data Structures",
-        difficulty: "medium"
-      },
-      {
-        id: "q3",
-        type: "closed",
-        question: "What is the time complexity of a binary search algorithm?",
-        options: [
-          { id: "a", text: "O(n)" },
-          { id: "b", text: "O(n²)" },
-          { id: "c", text: "O(log n)" },
-          { id: "d", text: "O(n log n)" }
-        ],
-        correctAnswer: "c",
-        explanation: "Binary search has a time complexity of O(log n) because it divides the search interval in half at each step.",
-        topic: "Algorithms",
-        difficulty: "medium"
-      },
-      {
-        id: "q4",
-        type: "closed",
-        question: "Which of the following is NOT a principle of object-oriented programming?",
-        options: [
-          { id: "a", text: "Encapsulation" },
-          { id: "b", text: "Inheritance" },
-          { id: "c", text: "Normalization" },
-          { id: "d", text: "Polymorphism" }
-        ],
-        correctAnswer: "c",
-        explanation: "Normalization is a concept in database design, not an object-oriented programming principle. The core principles of OOP are encapsulation, inheritance, polymorphism, and abstraction.",
-        topic: "Object-Oriented Programming",
-        difficulty: "medium"
-      },
-      {
-        id: "q5",
-        type: "open",
-        question: "Describe the concept of recursion and provide a simple example of a recursive algorithm.",
-        correctAnswer: "Recursion is a programming technique where a function calls itself to solve a problem. A common example is calculating factorial: factorial(n) = n * factorial(n-1) with base case factorial(0) = 1.",
-        explanation: "Recursion is when a function calls itself as part of its execution. It requires at least one base case to prevent infinite recursion. Examples include factorial calculation, tree traversal, and the Fibonacci sequence. The factorial function is a simple example: factorial(n) = n * factorial(n-1) with factorial(0) = 1 as the base case.",
-        topic: "Algorithms",
-        difficulty: "hard"
-      }
-    ]
-  };
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    // Parse the response
+    const data = await response.json();
+    
+    // Transform the API response to match our Exam interface
+    return {
+      id: data.id.toString(),
+      title: `Exam ${data.id}`,
+      description: `Based on template ${data.template_id}`,
+      estimatedTime: `${Math.max(15, data.questions.length * 3)} minutes`,
+      questions: data.questions.map((q: any) => ({
+        id: q.id.toString(),
+        type: q.type,
+        question: q.question || q.topic,
+        options: q.options ? JSON.parse(q.options) : [],
+        correctAnswer: q.answer || "",
+        explanation: q.solution || "",
+        topic: q.topic,
+        difficulty: q.difficulty || "medium"
+      }))
+    };
+  } catch (error) {
+    console.error('Error fetching exam:', error);
+    // Return mock data as fallback in case of error
+    return {
+      id: examId,
+      title: "Computer Science Fundamentals",
+      description: "Test your knowledge of basic computer science concepts",
+      estimatedTime: "45 minutes",
+      questions: [
+        {
+          id: "q1",
+          type: "closed",
+          question: "Which data structure follows the First In First Out (FIFO) principle?",
+          options: [
+            { id: "a", text: "Stack" },
+            { id: "b", text: "Queue" },
+            { id: "c", text: "Tree" },
+            { id: "d", text: "Graph" }
+          ],
+          correctAnswer: "b",
+          explanation: "A Queue follows the First In First Out (FIFO) principle, where the first element added is the first one to be removed.",
+          topic: "Data Structures",
+          difficulty: "easy"
+        },
+        {
+          id: "q2",
+          type: "open",
+          question: "Explain how an array differs from a linked list in terms of memory allocation and access patterns.",
+          correctAnswer: "Arrays allocate memory in contiguous blocks, allowing for constant-time random access but making insertion/deletion expensive. Linked lists allocate memory dynamically with pointers, making insertion/deletion efficient but random access slower.",
+          explanation: "Arrays store elements in contiguous memory locations, which makes them efficient for random access (O(1)) but inefficient for insertions/deletions in the middle (O(n)). Linked lists store elements in nodes that point to the next node, making insertions/deletions efficient (O(1) if you have a pointer to the position) but random access inefficient (O(n)).",
+          topic: "Data Structures",
+          difficulty: "medium"
+        },
+        {
+          id: "q3",
+          type: "closed",
+          question: "What is the time complexity of a binary search algorithm?",
+          options: [
+            { id: "a", text: "O(n)" },
+            { id: "b", text: "O(n²)" },
+            { id: "c", text: "O(log n)" },
+            { id: "d", text: "O(n log n)" }
+          ],
+          correctAnswer: "c",
+          explanation: "Binary search has a time complexity of O(log n) because it divides the search interval in half at each step.",
+          topic: "Algorithms",
+          difficulty: "medium"
+        },
+        {
+          id: "q4",
+          type: "closed",
+          question: "Which of the following is NOT a principle of object-oriented programming?",
+          options: [
+            { id: "a", text: "Encapsulation" },
+            { id: "b", text: "Inheritance" },
+            { id: "c", text: "Normalization" },
+            { id: "d", text: "Polymorphism" }
+          ],
+          correctAnswer: "c",
+          explanation: "Normalization is a concept in database design, not an object-oriented programming principle. The core principles of OOP are encapsulation, inheritance, polymorphism, and abstraction.",
+          topic: "Object-Oriented Programming",
+          difficulty: "medium"
+        },
+        {
+          id: "q5",
+          type: "open",
+          question: "Describe the concept of recursion and provide a simple example of a recursive algorithm.",
+          correctAnswer: "Recursion is a programming technique where a function calls itself to solve a problem. A common example is calculating factorial: factorial(n) = n * factorial(n-1) with base case factorial(0) = 1.",
+          explanation: "Recursion is when a function calls itself as part of its execution. It requires at least one base case to prevent infinite recursion. Examples include factorial calculation, tree traversal, and the Fibonacci sequence. The factorial function is a simple example: factorial(n) = n * factorial(n-1) with factorial(0) = 1 as the base case.",
+          topic: "Algorithms",
+          difficulty: "hard"
+        }
+      ]
+    };
+  }
 };
 
 export default function ExamPage() {
   const { examId } = useParams<{ examId: string }>();
   const router = useRouter();
+  const { isAuthenticated } = useAuth(); // Use authentication context
   
   const [exam, setExam] = useState<Exam | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,8 +153,11 @@ export default function ExamPage() {
   useEffect(() => {
     const loadExam = async () => {
       try {
-        const examData = await fetchExam(examId as string);
-        setExam(examData);
+        // Only fetch exam if authenticated
+        if (isAuthenticated) {
+          const examData = await fetchExam(examId as string);
+          setExam(examData);
+        }
       } catch (error) {
         console.error("Failed to fetch exam:", error);
       } finally {
@@ -121,7 +166,7 @@ export default function ExamPage() {
     };
 
     loadExam();
-  }, [examId]);
+  }, [examId, isAuthenticated]); // Re-fetch when examId or authentication status changes
 
   useEffect(() => {
     // Timer countdown

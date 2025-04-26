@@ -10,6 +10,8 @@ import { Clock, Book, Award, MoreVerticalIcon, TrashIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { getAuthToken } from "@/utils/auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Exam {
   id: string;
@@ -21,45 +23,86 @@ interface Exam {
   createdAt: string;
 }
 
-// Mock function to simulate fetching exams from an API
+// Function to fetch exams from the backend API
 const fetchExams = async (): Promise<Exam[]> => {
-  // In a real app, this would be an API call
-  // Simulating network delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  return [
-    {
-      id: "exam-cs-basics",
-      title: "Computer Science Fundamentals",
-      description: "Test your knowledge of basic computer science concepts",
-      estimatedTime: "45 minutes",
-      difficulty: "medium",
-      questionCount: 5,
-      createdAt: "2023-12-10"
-    },
-    {
-      id: "exam-algorithms",
-      title: "Advanced Algorithms",
-      description: "Challenge yourself with complex algorithm problems",
-      estimatedTime: "60 minutes",
-      difficulty: "hard",
-      questionCount: 8,
-      createdAt: "2023-12-15"
-    },
-    {
-      id: "exam-web-dev",
-      title: "Web Development Basics",
-      description: "Test your knowledge of HTML, CSS, and JavaScript",
-      estimatedTime: "30 minutes",
-      difficulty: "easy",
-      questionCount: 4,
-      createdAt: "2023-12-20"
+  try {
+    // Get the token using the authentication utility
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Authentication token not found');
     }
-  ];
+
+    // Make the API request
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/exams`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    // Parse the response
+    const data = await response.json();
+    
+    // Transform the API response to match our Exam interface
+    return data.map((exam: any) => ({
+      id: exam.id.toString(),
+      title: `Exam ${exam.id}`,
+      description: `Based on ${exam.template_topics || 'various topics'}`,
+      estimatedTime: `${Math.max(15, exam.question_count * 3)} minutes`,
+      difficulty: getDifficultyLevel(exam.question_count),
+      questionCount: exam.question_count || 0,
+      createdAt: new Date().toISOString().split('T')[0], // Use current date as fallback
+    }));
+  } catch (error) {
+    console.error('Error fetching exams:', error);
+    // Return mock data as fallback in case of error
+    return [
+      {
+        id: "exam-cs-basics",
+        title: "Computer Science Fundamentals",
+        description: "Test your knowledge of basic computer science concepts",
+        estimatedTime: "45 minutes",
+        difficulty: "medium",
+        questionCount: 5,
+        createdAt: "2023-12-10"
+      },
+      {
+        id: "exam-algorithms",
+        title: "Advanced Algorithms",
+        description: "Challenge yourself with complex algorithm problems",
+        estimatedTime: "60 minutes",
+        difficulty: "hard",
+        questionCount: 8,
+        createdAt: "2023-12-15"
+      },
+      {
+        id: "exam-web-dev",
+        title: "Web Development Basics",
+        description: "Test your knowledge of HTML, CSS, and JavaScript",
+        estimatedTime: "30 minutes",
+        difficulty: "easy",
+        questionCount: 4,
+        createdAt: "2023-12-20"
+      }
+    ];
+  }
+};
+
+// Helper function to determine difficulty level based on question count
+const getDifficultyLevel = (questionCount: number): string => {
+  if (questionCount <= 5) return 'easy';
+  if (questionCount <= 10) return 'medium';
+  return 'hard';
 };
 
 export default function ExamsPage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth(); // Use authentication context
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [examToDelete, setExamToDelete] = useState<Exam | null>(null);
@@ -68,8 +111,11 @@ export default function ExamsPage() {
   useEffect(() => {
     const loadExams = async () => {
       try {
-        const examsData = await fetchExams();
-        setExams(examsData);
+        // Only fetch exams if authenticated
+        if (isAuthenticated) {
+          const examsData = await fetchExams();
+          setExams(examsData);
+        }
       } catch (error) {
         console.error("Failed to fetch exams:", error);
       } finally {
@@ -78,7 +124,7 @@ export default function ExamsPage() {
     };
 
     loadExams();
-  }, []);
+  }, [isAuthenticated]); // Re-fetch when authentication status changes
 
   const handleDeleteExam = () => {
     if (examToDelete) {
