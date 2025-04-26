@@ -1,10 +1,26 @@
 from openai import OpenAI
+from agents import Agent, Runner
+import asyncio
 import json
-def generate_exercise(example:json) -> dict:
-    client = OpenAI()
+human_agent = Agent(
+    name="human agent",
+    instructions="Jesteś wysokiej rangi profesorem humanistyki. Twoim zadaniem jest odpowiadać na pytania dotyczące nauk humanistycznych.",
+    )
+science_agent = Agent(
+    name="science agent",
+    instructions="Jesteś wysokiej rangi profesorem fizyki, matematyki i innych nauk ścisłych. Twoim zadaniem jest odpowiadać na pytania dotyczące nauk ścisłych.",
+    )
 
-    response = client.responses.create(
-        model="gpt-4.1",
+triage_agent = Agent(
+    name="triage agent",
+    instructions="Jesteś wysokiej rangi profesorem. Twoim zadaniem jest odpowiadać na pytania dotyczące nauk humanistycznych i ścisłych. Podziel pytania na 2 kategorie: humanistyka i nauki ścisłe.",
+    handoffs=[human_agent, science_agent],
+    )
+    
+async def generate_exercise(example:json) -> dict:
+    client = OpenAI()
+    response = await Runner.run(
+        triage_agent,
         input = json.dumps(example) + """
         Napisz zadania dla poniższych tematów i podaj odpowiedzi oraz możliwe rozwiązanie w formacie JSON.Podawaj tylko tyle zadań ile jest tematów. Nie podawaj mi żadnych innych informacji. Nie używaj polskich znaków. Wypisz tylko klucz i wartość. Kluczami mają być numery zadań, a wartościami mają być zadania.
         Na przykład:
@@ -17,6 +33,6 @@ def generate_exercise(example:json) -> dict:
         """
     )
 
-    return json.loads(response.output_text)
+    return json.loads(response.final_output)
 
 # print(json.dumps(generate_exercise({"1": "Dodawanie 4 liczb", "2": "Mnożenie 4 liczb", "3": "Dodawanie 2 liczb"})))
