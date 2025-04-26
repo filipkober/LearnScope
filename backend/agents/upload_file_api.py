@@ -2,6 +2,7 @@ from openai import OpenAI
 from agents import Agent, Runner
 import asyncio
 import json
+
 human_agent = Agent(
     name="human agent",
     instructions="Jesteś wysokiej rangi profesorem humanistyki. Twoim zadaniem jest odpowiadać na pytania dotyczące nauk humanistycznych.",
