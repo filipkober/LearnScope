@@ -13,22 +13,54 @@ const DarkModeSwitch = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
 >(({ className, ...props }, ref) => {
 
-  const [isDark, setIsDark] = useState(Cookies.get("theme") === "dark");
+  // Start with a null state to avoid hydration mismatch
+  const [isDark, setIsDark] = useState<boolean | null>(null);
+
+  // Initialize the state on the client side only
+  useEffect(() => {
+    // Check if dark mode is already enabled in HTML element
+    const isDarkMode = document.documentElement.classList.contains("dark");
+    const savedTheme = Cookies.get("theme");
+    
+    // Initialize state based on current document state or cookie
+    if (savedTheme) {
+      setIsDark(savedTheme === "dark");
+    } else {
+      // Default to system preference if no cookie exists
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDark(systemPrefersDark);
+      Cookies.set("theme", systemPrefersDark ? "dark" : "light");
+      
+      // Update HTML class if needed
+      if (systemPrefersDark && !isDarkMode) {
+        document.documentElement.classList.add("dark");
+      } else if (!systemPrefersDark && isDarkMode) {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  }, []);
 
   const toggleDarkMode = () => {
-    const newTheme = isDark ? "light" : "dark";
-    setIsDark(!isDark);
-    Cookies.set("theme", newTheme);
-  };
-
-  useEffect(() => {
-    const theme = Cookies.get("theme");
-    if (theme === "dark") {
+    if (isDark === null) return;
+    
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    
+    // Update cookie
+    Cookies.set("theme", newIsDark ? "dark" : "light");
+    
+    // Update HTML class
+    if (newIsDark) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-  }, [isDark]);
+  };
+
+  // Don't render the switch until client-side initialization is complete
+  if (isDark === null) {
+    return <div className={cn("h-5 w-9", className)} />;
+  }
 
   return (
     <SwitchPrimitives.Root
@@ -39,7 +71,7 @@ const DarkModeSwitch = React.forwardRef<
       {...props}
       ref={ref}
       onClick={toggleDarkMode}
-      defaultChecked={isDark}
+      checked={isDark}
       data-state={isDark ? "checked" : "unchecked"}
       data-theme={isDark ? "dark" : "light"}
     >
@@ -48,7 +80,10 @@ const DarkModeSwitch = React.forwardRef<
           "pointer-events-none block h-4 w-4 rounded-full bg-transparent shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
         )}
       >
-        {isDark ? <Moon className="-my-1.5 -mr-2" color="blue" size={28} /> : <Sun className="-my-1.5 -ml-2" color="yellow" size={28} />}
+        {isDark ? 
+          <Moon className="-my-1.5 -mr-2" color="blue" size={28} /> : 
+          <Sun className="-my-1.5 -ml-2" color="yellow" size={28} />
+        }
       </SwitchPrimitives.Thumb>
     </SwitchPrimitives.Root>
   );
