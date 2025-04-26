@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { cookies } from "next/headers";
+import { use } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,8 +24,21 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  const isDark = use(new Promise(async (res) => {
+    const cookieStore = await cookies();
+    const theme = cookieStore.get("theme")?.value;
+    if (theme === "dark") {
+      res(true);
+    } else if (theme === "light") {
+      res(false);
+    } else {
+      res(false);
+    }
+  }));
+
   return (
-    <html lang="en">
+    <html lang="en" className={`${isDark ? "dark" : ""}`}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
