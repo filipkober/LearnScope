@@ -1,107 +1,67 @@
 from openai import OpenAI
-import json
-import os
+from agents import Agent, Runner
 import base64
-from dotenv import load_dotenv
+import asyncio
+import json
+from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-# Wczytaj zmienne środowiskowe z pliku .env
-load_dotenv()
 
-# Pobierz klucz API ze zmiennej środowiskowej
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
-    raise ValueError("Brak klucza API OpenAI w zmiennej środowiskowej OPENAI_API_KEY")
+class Zagadnienie(BaseModel):
+    id: int = Field(..., description="Numer zadania")
+    description: str = Field(..., description="Zagadnienie zadania")
+class ListaZagadnien(BaseModel):
+    ListaZagadnien: list[Zagadnienie] = Field(..., description="Lista zadań")
+    class Config:
+        schema_extra = {
+            "example": {
+                "lista": [
+                    {"id": 1, "description": "mnożenie"},
+                    {"id": 2, "description": "dodawanie"},
+                ]
+            }
+        }
 
-# Inicjalizuj klienta OpenAI z kluczem API
-client = OpenAI(api_key=api_key)
+human_agent = Agent(
+    name="human agent",
+    instructions="Jesteś wysokiej rangi profesorem humanistyki. Twoim zadaniem jest odpowiadać na pytania dotyczące nauk humanistycznych.",
+    output_type=ListaZagadnien,
+    )
+science_agent = Agent(
+    name="science agent",
+    instructions="Jesteś wysokiej rangi profesorem fizyki, matematyki i innych nauk ścisłych. Twoim zadaniem jest odpowiadać na pytania dotyczące nauk ścisłych.",
+    output_type=ListaZagadnien,
+    )
+
+triage_agent = Agent(
+    name="triage agent",
+    instructions="Jesteś wysokiej rangi profesorem. Twoim zadaniem jest odpowiadać na pytania dotyczące nauk humanistycznych i ścisłych. Podziel pytania na 2 kategorie: humanistyka i nauki ścisłe.",
+    handoffs=[human_agent, science_agent],
+    output_type=ListaZagadnien,
+    )
+
+client = OpenAI()
 
 def encode_image(image_path):
-    """
-    Koduje obraz do formatu base64
-    """
     with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
+        return base64.b64encode(image_file.read()).decode("utf-8")
 
-def extract_tasks_from_image(image_path):
-    """
-    Extract tasks from an image using OpenAI's API and return as JSON
-    """
-    # Koduj obraz
-    try:
-        base64_image = encode_image(image_path)
-    except Exception as e:
-        return {
-            "error": True,
-            "message": str(e),
-            "tasks": []
-        }
-
-    # Craft a prompt that explicitly requests JSON output
-    prompt = """
-    Please analyze the provided image and extract all tasks, both explicit (e.g., written text) and implicit (e.g., inferred from visual context).
-    Format your response as a dictionary with the following structure:
-    {
-        "tasks": {
-            "1": "Task description",
-            "2": "Task description",
-            // more tasks...
-        }
-    }
-    
-    If no tasks are found, return an empty tasks dictionary.
-    """
-
-    try:
-        # Call the OpenAI API with image input
-        response = client.chat.completions.create(
-            model="gpt-4o",  # Używamy modelu obsługującego obrazy
-            messages=[
+async def upload_image_api(image_path: str) -> dict:
+    base64_image = encode_image(image_path)
+    response = await Runner.run(
+        triage_agent,
+        input=[{
+            "role": "user",
+            "content": [
+                { "type": "input_text", "text": "Daj mi listę zagadnień wykorzystanych we wszystkich zadaniach w tym pliku. Nie podawaj mi żadnych innych informacji. Nie używaj polskich znaków. Wypisz tylko klucz i wartość. Kluczami mają być numery zadań, a wartościami mają być zagadnienia. Np:"+"{'id':'1','description':'mnożenie'}W" },
                 {
-                    "role": "system",
-                    "content": "You are a helpful assistant that extracts actionable tasks from images and presents them as structured JSON."
+                    "type": "input_image",
+                    "image_url": f"data:image/jpeg;base64,{base64_image}",
                 },
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/png;base64,{base64_image}"
-                            }
-                        }
-                    ]
-                }
             ],
-            temperature=0.2,
-            response_format={"type": "json_object"}  # Ensure JSON response
-        )
-
-        # Extract JSON from the response
-        result = response.choices[0].message.content
-
-        # Parse JSON to validate it
-        tasks_json = json.loads(result)
-
-        return tasks_json
-
-    except Exception as e:
-        error_response = {
-            "error": True,
-            "message": str(e),
-            "tasks": []
         }
-        return error_response
+    ],
+    )
+    return response.final_output.json()
 
-# Example usage
-if __name__ == "__main__":
-    # Lista przykładowych obrazów
-    sample_image_paths = [
-        "zrzut.png"
-    ]
-
-    for image_path in sample_image_paths:
-        print(f"\nPrzetwarzanie obrazu: {image_path}")
-        tasks_json = extract_tasks_from_image(image_path)
-        print("EXTRACTED TASKS (JSON):")
-        print(json.dumps(tasks_json, indent=2))
+print(asyncio.run(upload_image_api("C:/Users/huber/Downloads/zad.png")))
