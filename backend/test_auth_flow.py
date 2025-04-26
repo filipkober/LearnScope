@@ -14,8 +14,8 @@ print("Register:", register_response.status_code, register_response.json())
 
 # Step 2: Login
 login_data = {
-    "Username": "john_doe",
-    "Password": "secret123"
+    "username": "john_doe",
+    "password": "secret123"
 }
 
 login_response = requests.post(f"{BASE_URL}/api/login", json=login_data)
