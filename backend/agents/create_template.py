@@ -69,10 +69,5 @@ def create_template(subject, topics, user_id):
     conn.commit()
     conn.close()
 
-slownik = asyncio.run(upload_text_api("2+2,2*2,2x+3-0=2"))
 
-slownik = json.loads(slownik)
-
-for i in slownik["ListaZagadnien"]:
-    create_template(i["przedmiot"], i["description"], int(1))
 

@@ -38,11 +38,11 @@ triage_agent = Agent(
     output_type=ListaZagadnien,
     )
 
-async def upload_file_api(file_path: str, file_name: str) -> dict:
+async def upload_file_api(file) -> dict:
     client = OpenAI()
 
-    file = client.files.create(
-        file=open(f"{file_path}/{file_name}", "rb"),
+    uploaded_file = client.files.create(
+        file=file,
         purpose="user_data"
     )
 
@@ -54,7 +54,7 @@ async def upload_file_api(file_path: str, file_name: str) -> dict:
                 "content": [
                     {
                         "type": "input_file",
-                        "file_id": file.id,
+                        "file_id": uploaded_file.id,
                     },
                     {
                         "type": "input_text",
