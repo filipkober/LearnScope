@@ -33,3 +33,8 @@ class Question(db.Model):
     topic = db.Column(db.String(100), nullable=False)
     options = db.Column(db.Text, nullable=True)  # JSON string for closed questions
     exam_id = db.Column(db.Integer, db.ForeignKey('exam.id'), nullable=False)
+    
+class TokenBlocklist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(36), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())

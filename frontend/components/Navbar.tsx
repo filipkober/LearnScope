@@ -22,16 +22,26 @@ import {
 export default function Navbar() {
     const { isAuthenticated, user, logout } = useAuth();
     const [userName, setUserName] = useState("");
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
         if (user) {
-            setUserName(user.Username || "User");
+            setUserName(user.username || "User");
         }
     }, [user]);
 
     const profilePicture = createAvatar(initials, {
         seed: userName,
     })
+
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        try {
+            await logout();
+        } finally {
+            setIsLoggingOut(false);
+        }
+    };
 
   return (
     <nav className="flex items-center justify-between p-4 bg-gradient-to-r from-background to-background/95 backdrop-blur-sm border-b sticky w-full top-0 z-50 shadow-sm">
@@ -139,10 +149,10 @@ export default function Navbar() {
                         </Link>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
-                            onClick={logout}
+                            onClick={handleLogout}
                             className="text-red-600 cursor-pointer hover:text-red-700 focus:text-red-700"
                         >
-                            Logout
+                            {isLoggingOut ? "Logging out..." : "Logout"}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

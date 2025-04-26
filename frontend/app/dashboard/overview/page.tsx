@@ -1,15 +1,19 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 
 export default function DashboardOverview() {
     // This would normally come from authentication
-    const userName = "User";
-    
+
+    const {user} = useAuth();
+
     return (
         <div className="p-6 space-y-8">
             <section className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Hello, {userName}!</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Hello, {user && user.username.split(" ")[0]}!</h1>
                 <p className="text-muted-foreground">
                     Welcome to your LearnScope dashboard. What would you like to do today?
                 </p>
@@ -93,13 +97,13 @@ export default function DashboardOverview() {
             </div>
 
             {/* Recent Activity Section */}
-            <section className="pt-6">
+            {/* <section className="pt-6">
                 <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
                 <div className="bg-muted/40 p-4 rounded-lg text-center">
                     <p className="text-muted-foreground">You haven&apos;t completed any exercises yet.</p>
                     <p className="text-sm text-muted-foreground">Your recent activity will appear here once you start practicing.</p>
                 </div>
-            </section>
+            </section> */}
         </div>
     );
 }
