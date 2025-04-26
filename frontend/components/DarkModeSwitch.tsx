@@ -59,33 +59,36 @@ const DarkModeSwitch = React.forwardRef<
 
   // Don't render the switch until client-side initialization is complete
   if (isDark === null) {
-    return <div className={cn("h-5 w-9", className)} />;
+    return <div className={cn("h-6 w-11", className)} />;
   }
 
   return (
-    <SwitchPrimitives.Root
-      className={cn(
-        "peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input",
-        className
-      )}
-      {...props}
-      ref={ref}
-      onClick={toggleDarkMode}
-      checked={isDark}
-      data-state={isDark ? "checked" : "unchecked"}
-      data-theme={isDark ? "dark" : "light"}
-    >
-      <SwitchPrimitives.Thumb
+    <div className="flex items-center space-x-2">
+      <Sun className="h-4 w-4 text-yellow-500" />
+      <SwitchPrimitives.Root
         className={cn(
-          "pointer-events-none block h-4 w-4 rounded-full bg-transparent shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
+          "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
+          isDark 
+            ? "bg-blue-600" 
+            : "bg-yellow-400/90",
+          className
         )}
+        {...props}
+        ref={ref}
+        onClick={toggleDarkMode}
+        checked={isDark}
       >
-        {isDark ? 
-          <Moon className="-my-1.5 -mr-2" color="blue" size={28} /> : 
-          <Sun className="-my-1.5 -ml-2" color="yellow" size={28} />
-        }
-      </SwitchPrimitives.Thumb>
-    </SwitchPrimitives.Root>
+        <SwitchPrimitives.Thumb
+          className={cn(
+            "pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200",
+            isDark 
+              ? "translate-x-5" 
+              : "translate-x-0"
+          )}
+        />
+      </SwitchPrimitives.Root>
+      <Moon className="h-4 w-4 text-blue-500" />
+    </div>
   );
 });
 DarkModeSwitch.displayName = SwitchPrimitives.Root.displayName;
