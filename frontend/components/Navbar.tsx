@@ -1,3 +1,5 @@
+"use client";
+
 import { createAvatar } from "@dicebear/core";
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "./ui/navigation-menu";
 import { initials } from "@dicebear/collection";
@@ -6,14 +8,29 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import Image from "next/image";
 import { DarkModeSwitch } from "./DarkModeSwitch";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { 
+    DropdownMenu, 
+    DropdownMenuContent, 
+    DropdownMenuItem, 
+    DropdownMenuLabel, 
+    DropdownMenuSeparator, 
+    DropdownMenuTrigger 
+} from "./ui/dropdown-menu";
 
 export default function Navbar() {
+    const { isAuthenticated, user, logout } = useAuth();
+    const [userName, setUserName] = useState("");
 
-    const loggedIn = true; // Replace with actual authentication logic
-    const user = { name: "Filip Kober" }; // Replace with actual user data
+    useEffect(() => {
+        if (user) {
+            setUserName(user.Username || "User");
+        }
+    }, [user]);
 
     const profilePicture = createAvatar(initials, {
-        seed: user.name,
+        seed: userName,
     })
 
   return (
@@ -64,10 +81,16 @@ export default function Navbar() {
                                     Statistics
                                 </NavigationMenuLink>
                                 <NavigationMenuLink 
-                                    href="/dashboard/exercise"
+                                    href="/dashboard/practice"
                                     className="px-3 py-2 rounded-md transition-colors hover:bg-muted"
                                 >
-                                    Single Exercise
+                                    Practice
+                                </NavigationMenuLink>
+                                <NavigationMenuLink 
+                                    href="/dashboard/exams"
+                                    className="px-3 py-2 rounded-md transition-colors hover:bg-muted"
+                                >
+                                    Exams
                                 </NavigationMenuLink>
                             </div>
                         </NavigationMenuContent>
@@ -93,22 +116,42 @@ export default function Navbar() {
         </div>
         <div className="flex items-center gap-6">
             <DarkModeSwitch className="my-auto" />
-            {loggedIn ? (
-                <Link href="/dashboard/profile">
-                    <Avatar className="h-9 w-9 transition-transform hover:scale-105 ring-2 ring-background hover:ring-primary">
-                        <AvatarImage
-                            src={profilePicture.toDataUri()}
-                            className="object-cover"
-                        />
-                        <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                            {user.name.split(" ").map((n) => n[0]).join("")}
-                        </AvatarFallback>
-                    </Avatar>
-                </Link>
+            {isAuthenticated ? (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Avatar className="h-9 w-9 transition-transform hover:scale-105 ring-2 ring-background hover:ring-primary cursor-pointer">
+                            <AvatarImage
+                                src={profilePicture.toDataUri()}
+                                className="object-cover"
+                            />
+                            <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                                {userName.split(" ").map((n) => n[0]).join("")}
+                            </AvatarFallback>
+                        </Avatar>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <Link href="/dashboard">
+                            <DropdownMenuItem className="cursor-pointer">
+                                Dashboard
+                            </DropdownMenuItem>
+                        </Link>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                            onClick={logout}
+                            className="text-red-600 cursor-pointer hover:text-red-700 focus:text-red-700"
+                        >
+                            Logout
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             ) : (
-                <Button variant="default" size="sm" className="font-medium">
-                    Login
-                </Button>
+                <Link href="/login">
+                    <Button variant="default" size="sm" className="font-medium">
+                        Login
+                    </Button>
+                </Link>
             )}
         </div>
     </nav>
