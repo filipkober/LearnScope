@@ -23,7 +23,7 @@ pip install --upgrade pip
 
 # Install Flask and other dependencies
 echo "Installing Flask and dependencies..."
-pip install flask
+pip install -r requirements.txt
 
 echo "Installation complete! The virtual environment is now activated."
 echo "You can start developing your Flask application."
