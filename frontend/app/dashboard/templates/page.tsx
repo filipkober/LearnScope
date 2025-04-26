@@ -54,6 +54,9 @@ export default function Page() {
         setTemplates(templates.filter(template => template.id !== id));
         setShowDeleteConfirm(false);
     };
+    const handle = async () => {
+        
+    }
 
     return (
         <div className="p-6 space-y-8">
@@ -154,7 +157,7 @@ export default function Page() {
                         
                         <DialogFooter>
                             <Button variant="outline">Cancel</Button>
-                            <Button>Create Template</Button>
+                            <Button onClick={handle}>Create Template</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

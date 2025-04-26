@@ -5,6 +5,10 @@ from flask_cors import CORS
 from datetime import timedelta
 import os
 import pathlib
+from create_template import create_template
+from upload_file_api import upload_file_api
+from upload_text_api import upload_text_api
+from upload_image_api import upload_image_api
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -71,6 +75,32 @@ init_db()
 @app.route("/")
 def hello_world():
     return "<p>Hello, World!</p>"
+
+from fastapi import FastAPI, UploadFile, File
+import asyncio
+import json
+
+app = FastAPI()
+
+async def process_file(file: UploadFile) -> None:
+    content = await file.read()
+    slownik = await upload_text_api(content)
+    slownik = json.loads(slownik)
+    for i in slownik["ListaZagadnien"]:
+        create_template(i["przedmiot"], i["description"], 1)
+
+async def file_endpoint(file: UploadFile = File(...)) -> None:
+    await process_file(file)
+
+@app.post("/file_endpoint")
+async def upload_file_endpoint(file: UploadFile = File(...)):
+    result = await upload_file_api(file)
+    return result
+
+@app.post("/image_endpoint")
+async def image_endpoint(file: UploadFile = File(...)) -> None:
+    await process_file(file)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
