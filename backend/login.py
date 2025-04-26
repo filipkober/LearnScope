@@ -1,13 +1,14 @@
 from flask import request, jsonify, Blueprint
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timezone
 
 # Create blueprint
 auth_bp = Blueprint('auth', __name__)
 
 # These will be imported from main.py when the blueprint is registered
 from main import db, jwt
-from models import User
+from models import User, TokenBlocklist
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -62,6 +63,25 @@ def profile():
         return jsonify({'message': 'User not found'}), 404
 
     return jsonify({
-        'Username': user.username,
-        'Email': user.email
+        'username': user.username,
+        'email': user.email
     }), 200
+
+@auth_bp.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    jti = get_jwt()["jti"]
+    now = datetime.now(timezone.utc)
+    
+    # Store the JTI in the blocklist to invalidate the token
+    db.session.add(TokenBlocklist(jti=jti, created_at=now))
+    db.session.commit()
+    
+    return jsonify(msg="Successfully logged out"), 200
+
+# Callback function to check if a JWT is in the blocklist
+@jwt.token_in_blocklist_loader
+def check_if_token_revoked(jwt_header, jwt_payload):
+    jti = jwt_payload["jti"]
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+    return token is not None
