@@ -4,6 +4,7 @@ import asyncio
 import json
 from pydantic import BaseModel, Field
 
+
 class Question(BaseModel):
     id: int = Field(..., description="Id pytania")
     type: str = Field(..., description="Typ pytania(zamkniete, otwarte)")
@@ -48,7 +49,7 @@ triage_agent = Agent(
     output_type=Exam,
     )
     
-async def generate_exercise(example:json) -> dict:
+async def generate_exercise(example:json, template) -> dict:
     client = OpenAI()
     response = await Runner.run(
         triage_agent,
@@ -57,6 +58,6 @@ async def generate_exercise(example:json) -> dict:
         """
     )
 
-    return response.final_output
+    return response.final_output.json()
 
-# print(asyncio.run(generate_exercise({"1": "Dodawanie 4 liczb", "2": "Mnożenie 4 liczb", "3": "Dodawanie 2 liczb"})))
+# print(asyncio.run(generate_exercise({"1": "Dodawanie 4 liczb", "2": "Mnożenie 4 liczb", "3": "Dodawanie 2 liczb"},1)))
