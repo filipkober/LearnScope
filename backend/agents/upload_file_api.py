@@ -65,4 +65,4 @@ async def upload_file_api(file_path: str, file_name: str) -> dict:
     )
 
     return response.final_output.json()
-print(asyncio.run(upload_file_api("C:/Users/huber/Downloads", "maturka.pdf")))
+#print(asyncio.run(upload_file_api("C:/Users/huber/Downloads", "maturka.pdf")))

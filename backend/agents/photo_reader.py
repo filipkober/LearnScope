@@ -64,4 +64,4 @@ async def upload_image_api(image_path: str) -> dict:
     )
     return response.final_output.json()
 
-print(asyncio.run(upload_image_api("C:/Users/huber/Downloads/zad.png")))
+#print(asyncio.run(upload_image_api("C:/Users/huber/Downloads/zad.png")))
