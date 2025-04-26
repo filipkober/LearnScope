@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     }
 
     // Call backend logout endpoint to invalidate token
-    const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:5000'}/logout`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/logout`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
