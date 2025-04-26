@@ -11,7 +11,7 @@ def generate_exercise(example:json) -> dict:
         {
         "id": 1,
         "exercise_text": "Podaj miejsca zerowe funkcji x^2 - 4",
-        "odpowiedź": "2 i -2",
+        "odpowiedz": "2 i -2",
         "resolution": "x^2 = 4 \n x = sqrt(4) i x = -sqrt(4) \n x = 2 i x = -2"
         }
         """
