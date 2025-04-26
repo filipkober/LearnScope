@@ -51,16 +51,3 @@ def extract_tasks_from_text(text):
             "tasks": []
         }
         return error_response
-
-# Example usage
-if __name__ == "__main__":
-    sample_text = """
-    We need to prepare for the quarterly meeting next Thursday. 
-    Marketing data should be reviewed before then, and someone needs to check if the projector is working.
-    Jane mentioned that the slides need updating with the latest numbers.
-    It would be good to order lunch for everyone attending.
-    """
-    
-    tasks_json = extract_tasks_from_text(sample_text)
-    print("EXTRACTED TASKS (JSON):")
-    print(tasks_json)
