@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
-import Cookies from "js-cookie";
+import { cookies } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,23 +19,15 @@ export const metadata: Metadata = {
   description: "Your learning journey starts here",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   // Get theme preference from cookies on the server
-  // const theme = use(new Promise(async (resolve) => {
-  //   const cookieStore = await cookies();
-  //   const themeCookie = cookieStore.get("theme");
-  //   if (themeCookie) {
-  //     resolve(themeCookie.value);
-  //   }
-  //   resolve("light"); // Default to light theme if no cookie exists
-  // }))
-  
-  // Default to light theme if no cookie exists
-  const isDark = Cookies.get("theme") === "dark";
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get("theme");
+  const isDark = themeCookie?.value === "dark";
 
   return (
     <html lang="en" className={isDark ? "dark" : ""} suppressHydrationWarning>
