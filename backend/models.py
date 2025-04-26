@@ -16,6 +16,7 @@ class Stat(db.Model):
 
 class Template(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(80))
     topics = db.Column(db.String(200), nullable=False)  # Could be JSON or comma-separated
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     stats = db.relationship('Stat', backref='template', lazy=True)
