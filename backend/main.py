@@ -27,20 +27,44 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
-# Import blueprint after initializing extensions to avoid circular imports
-from login import auth_bp
-
-# Register blueprint
-app.register_blueprint(auth_bp)
-
 def init_db():
     """Initialize the database."""
     # Ensure the application instance folder exists
     pathlib.Path(app.instance_path).mkdir(parents=True, exist_ok=True)
     
+    # Import models to ensure they're registered with SQLAlchemy
+    import models
+    
     with app.app_context():
         db.create_all()
         print(f"Database tables created successfully at {app.config['SQLALCHEMY_DATABASE_URI']}")
+
+# Import blueprints after initializing extensions to avoid circular imports
+# First, import the files directly to avoid conflicts with other packages
+import importlib.util
+import sys
+
+# Import login blueprint
+login_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'login.py')
+spec = importlib.util.spec_from_file_location("login_module", login_path)
+login_module = importlib.util.module_from_spec(spec)
+sys.modules["login_module"] = login_module
+spec.loader.exec_module(login_module)
+
+# Import template blueprint
+template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template.py')
+spec = importlib.util.spec_from_file_location("template_module", template_path)
+template_module = importlib.util.module_from_spec(spec)
+sys.modules["template_module"] = template_module
+spec.loader.exec_module(template_module)
+
+# Get blueprints from modules
+auth_bp = login_module.auth_bp
+template_bp = template_module.template_bp
+
+# Register blueprints
+app.register_blueprint(auth_bp)
+app.register_blueprint(template_bp)
 
 init_db()
 
