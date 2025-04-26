@@ -1,8 +1,11 @@
 from openai import OpenAI
-from agents import Agent, Runner
-from pydantic import BaseModel, Field
 import asyncio
 import json
+from pydantic import BaseModel, Field
+from agents import (
+    Agent,
+    Runner,
+)
 
 class Zagadnienie(BaseModel):
     id: int = Field(..., description="Numer zadania")
@@ -19,50 +22,41 @@ class ListaZagadnien(BaseModel):
             }
         }
 
-human_agent = Agent(
+# Define a function to create agents dynamically by Type
+def create_agent_by_type(name: str, instructions: str, output_type: BaseModel) -> Agent:
+    return Agent(
+        name=name,
+        instructions=instructions,
+        output_type=output_type,
+    )
+
+# Create agents using the Type model
+human_agent = create_agent_by_type(
     name="human agent",
     instructions="Jesteś wysokiej rangi profesorem humanistyki. Twoim zadaniem jest odpowiadać na pytania dotyczące nauk humanistycznych.",
     output_type=ListaZagadnien,
-    )
-science_agent = Agent(
+)
+
+science_agent = create_agent_by_type(
     name="science agent",
     instructions="Jesteś wysokiej rangi profesorem fizyki, matematyki i innych nauk ścisłych. Twoim zadaniem jest odpowiadać na pytania dotyczące nauk ścisłych.",
     output_type=ListaZagadnien,
-    )
+)
 
-triage_agent = Agent(
+triage_agent = create_agent_by_type(
     name="triage agent",
     instructions="Jesteś wysokiej rangi profesorem. Twoim zadaniem jest odpowiadać na pytania dotyczące nauk humanistycznych i ścisłych. Podziel pytania na 2 kategorie: humanistyka i nauki ścisłe.",
-    handoffs=[human_agent, science_agent],
     output_type=ListaZagadnien,
-    )
+)
 
-async def upload_file_api(file_path: str, file_name: str) -> dict:
+client = OpenAI()
+
+async def upload_text_api(text):
     client = OpenAI()
-
-    file = client.files.create(
-        file=open(f"{file_path}/{file_name}", "rb"),
-        purpose="user_data"
-    )
-
     response = await Runner.run(
         triage_agent,
-        input=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "input_file",
-                        "file_id": file.id,
-                    },
-                    {
-                        "type": "input_text",
-                        "text": "Daj mi listę zagadnień wykorzystanych we wszystkich zadaniach w tym pliku. Podaj wyniki w jsonie. Nie podawaj mi żadnych innych informacji. Nie używaj polskich znaków. Wypisz tylko klucz i wartość. Kluczami mają być numery zadań, a wartościami mają być zagadnienia.",
-                    },
-                ]
-            }
-        ]
+        input=text + "Daj mi listę zagadnień wykorzystanych we wszystkich zadaniach podanych. Podaj wyniki w jsonie. Nie podawaj mi żadnych innych informacji. Nie używaj polskich znaków. Wypisz tylko klucz i wartość. Kluczami mają być numery zadań, a wartościami mają być zagadnienia.",
     )
-
     return response.final_output.json()
-#print(asyncio.run(upload_file_api("C:/Users/huber/Downloads", "maturka.pdf")))
+
+#print(asyncio.run(upload_text_api("2+2,2*2,2x+3-0=2")))

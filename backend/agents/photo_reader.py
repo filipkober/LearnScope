@@ -1,8 +1,11 @@
 from openai import OpenAI
 from agents import Agent, Runner
-from pydantic import BaseModel, Field
+import base64
 import asyncio
 import json
+from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
 
 class Zagadnienie(BaseModel):
     id: int = Field(..., description="Numer zadania")
@@ -37,32 +40,28 @@ triage_agent = Agent(
     output_type=ListaZagadnien,
     )
 
-async def upload_file_api(file_path: str, file_name: str) -> dict:
-    client = OpenAI()
+client = OpenAI()
 
-    file = client.files.create(
-        file=open(f"{file_path}/{file_name}", "rb"),
-        purpose="user_data"
-    )
+def encode_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
 
+async def upload_image_api(image_path: str) -> dict:
+    base64_image = encode_image(image_path)
     response = await Runner.run(
         triage_agent,
-        input=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "input_file",
-                        "file_id": file.id,
-                    },
-                    {
-                        "type": "input_text",
-                        "text": "Daj mi listę zagadnień wykorzystanych we wszystkich zadaniach w tym pliku. Podaj wyniki w jsonie. Nie podawaj mi żadnych innych informacji. Nie używaj polskich znaków. Wypisz tylko klucz i wartość. Kluczami mają być numery zadań, a wartościami mają być zagadnienia.",
-                    },
-                ]
-            }
-        ]
+        input=[{
+            "role": "user",
+            "content": [
+                { "type": "input_text", "text": "Daj mi listę zagadnień wykorzystanych we wszystkich zadaniach w tym pliku. Nie podawaj mi żadnych innych informacji. Nie używaj polskich znaków. Wypisz tylko klucz i wartość. Kluczami mają być numery zadań, a wartościami mają być zagadnienia. Np:"+"{'id':'1','description':'mnożenie'}W" },
+                {
+                    "type": "input_image",
+                    "image_url": f"data:image/jpeg;base64,{base64_image}",
+                },
+            ],
+        }
+    ],
     )
-
     return response.final_output.json()
-#print(asyncio.run(upload_file_api("C:/Users/huber/Downloads", "maturka.pdf")))
+
+#print(asyncio.run(upload_image_api("C:/Users/huber/Downloads/zad.png")))
