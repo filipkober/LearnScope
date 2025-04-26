@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setAuthToken } from "@/utils/auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Page() {
     const [formData, setFormData] = useState({
@@ -19,6 +20,8 @@ export default function Page() {
     const [successMessage, setSuccessMessage] = useState("");
     const router = useRouter();
     const searchParams = useSearchParams();
+
+    const {checkAuthentication} = useAuth();
 
     useEffect(() => {
         // Check if user just registered
@@ -70,6 +73,10 @@ export default function Page() {
             
             // Set token in a cookie for middleware authentication
             document.cookie = `auth_token=${data.access_token}; path=/; ${formData.rememberMe ? '' : 'max-age=86400'}`;
+            sessionStorage.setItem('auth_token', data.access_token);
+            localStorage.setItem('auth_token', data.access_token);
+
+            await checkAuthentication();
             
             // Check if there's a redirect parameter
             const redirectTo = searchParams.get('redirect') || '/dashboard';
