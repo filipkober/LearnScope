@@ -43,3 +43,5 @@ tmp/
 .coverage
 htmlcov/
 
+# db
+instance/
