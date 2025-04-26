@@ -1,9 +1,38 @@
+"use client";
+
 import Navbar from "@/components/Navbar";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 
-export default function Page() {
+export default function RegisterPage() {
+    const[username, setUsername] = useState("");
+    const[email,setEmail] = useState("");
+    const[password, setPassword] = useState("");
+    const[confirmPassword, setConfirmPassword] = useState("");
+
+    const handleRegister = async () => {
+        if (password !== confirmPassword) {
+          alert("Hasła się nie zgadzają!");
+          return;
+        }
+
+        try {const res = await fetch("http://localhost:5000/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({username, email, password}),
+        });
+
+        const data = await res.json();
+        alert(data.message||data.error);
+        }catch (error) {
+            console.error("Error during registration:", error);
+            alert("Wystąpił błąd podczas rejestracji. Spróbuj ponownie później.");
+        }
+    };
+
+
     return (
         <div className="grid grid-rows-[auto_1fr_auto] min-h-screen">
             <Navbar />
@@ -26,6 +55,8 @@ export default function Page() {
                                     id="username"
                                     placeholder="Choose a username" 
                                     className="mt-1 w-full" 
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
                                 />
                             </div>
                             <div>
@@ -37,6 +68,8 @@ export default function Page() {
                                     type="email"
                                     placeholder="Enter your email" 
                                     className="mt-1 w-full" 
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
                             <div>
@@ -47,7 +80,10 @@ export default function Page() {
                                     id="password"
                                     placeholder="Create a password" 
                                     type="password" 
-                                    className="mt-1 w-full" 
+                                    className="mt-1 w-full"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)
+                                    }
                                 />
                             </div>
                             <div>
@@ -58,7 +94,9 @@ export default function Page() {
                                     id="confirmPassword"
                                     placeholder="Confirm your password" 
                                     type="password" 
-                                    className="mt-1 w-full" 
+                                    className="mt-1 w-full"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -75,7 +113,7 @@ export default function Page() {
                             </label>
                         </div>
 
-                        <Button variant="default" size="lg" className="w-full">
+                        <Button variant="default" size="lg" className="w-full" onClick={handleRegister}>
                             Create Account
                         </Button>
 

@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 
+
+
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -20,7 +22,7 @@ export default function Home() {
           <p className="mt-4 text-lg text-foreground/80">Your learning journey starts here.</p>
           <p className="mt-2 text-lg text-foreground/80">Explore our features and get started!</p>
           <div className="mt-8">
-            <Link href="/dashboard">
+            <Link href="/register">
               <Button variant="default" size="lg" className="px-8 py-6 text-lg">
                 Get Started
               </Button>
