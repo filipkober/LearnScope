@@ -51,7 +51,7 @@ export default function Navbar() {
         <div className="flex gap-8">
         <DarkModeSwitch className="my-auto" />
         {loggedIn ? (
-            <Link href="dashboard/profile">
+            <Link href="/dashboard/profile">
             <Avatar>
                 <AvatarImage
                 src={profilePicture.toDataUri()} />
