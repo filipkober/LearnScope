@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Cookies from "js-cookie";
+import { use } from "react";
+import { cookies } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,7 +25,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   // Get theme preference from cookies on the server
-  const theme = Cookies.get("theme")
+  const theme = use(new Promise(async (resolve) => {
+    const cookieStore = await cookies();
+    const themeCookie = cookieStore.get("theme");
+    if (themeCookie) {
+      resolve(themeCookie.value);
+    }
+    resolve("light"); // Default to light theme if no cookie exists
+  }))
   
   // Default to light theme if no cookie exists
   const isDark = theme === "dark";

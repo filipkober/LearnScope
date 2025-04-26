@@ -10,7 +10,7 @@ import { DarkModeSwitch } from "./DarkModeSwitch";
 export default function Navbar() {
 
     const loggedIn = true; // Replace with actual authentication logic
-    const user = { name: "John Doe" }; // Replace with actual user data
+    const user = { name: "Filip Kober" }; // Replace with actual user data
 
     const profilePicture = createAvatar(initials, {
         seed: user.name,
