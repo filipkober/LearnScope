@@ -20,6 +20,12 @@ async def process_file(file: UploadFile) -> None:
     for i in slownik["ListaZagadnien"]:
         create_template(i["przedmiot"], i["description"], 1)
 
+async def process_image(file: UploadFile) -> None:
+    slownik = await upload_image_api(file)
+    slownik = json.loads(slownik)
+    for i in slownik["ListaZagadnien"]:
+        create_template(i["przedmiot"], i["description"], 1)
+
 @app.post("/text_endpoint")
 async def text_endpoint(text: str):
     await process_text(text)
@@ -32,7 +38,7 @@ async def file_endpoint(file: UploadFile = File(...)):
 
 @app.post("/image_endpoint")
 async def image_endpoint(file: UploadFile = File(...)):
-    await process_file(file)
+    await process_image(file)
     return {"status": "Image processed"}
 
 @app.get("/")
