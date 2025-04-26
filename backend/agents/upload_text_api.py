@@ -37,4 +37,4 @@ async def upload_text_api(text):
         """,
         )
     return json.loads(response.final_output)
-asyncio.run(upload_text_api("Równanie kwadratowe, dodawanie, mnożenie"))
+# asyncio.run(upload_text_api("Równanie kwadratowe, dodawanie, mnożenie"))
