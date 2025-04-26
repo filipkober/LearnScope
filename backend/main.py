@@ -8,7 +8,7 @@ import pathlib
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configure app
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_secret_key')
