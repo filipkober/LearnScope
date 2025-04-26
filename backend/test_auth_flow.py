@@ -4,7 +4,7 @@ BASE_URL = "http://127.0.0.1:5000"
 
 # Step 1: Register
 register_data = {
-    "Username": "john_doe",
+    "username": "john_doe",
     "Password": "secret123",
     "Email": "john@example.com"
 }
