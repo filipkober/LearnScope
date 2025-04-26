@@ -44,12 +44,11 @@ triage_agent = Agent(
 
 client = OpenAI()
 
-def encode_image(image_path):
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode("utf-8")
+def encode_image_file(image_file):
+    return base64.b64encode(image_file.read()).decode("utf-8")
 
-async def upload_image_api(image_path: str) -> dict:
-    base64_image = encode_image(image_path)
+async def upload_image_api(image) -> dict:
+    base64_image = encode_image_file(image)
     response = await Runner.run(
         triage_agent,
         input=[{
