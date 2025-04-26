@@ -64,10 +64,16 @@ export default function Navbar() {
                                     Statistics
                                 </NavigationMenuLink>
                                 <NavigationMenuLink 
-                                    href="/dashboard/exercise"
+                                    href="/dashboard/practice"
                                     className="px-3 py-2 rounded-md transition-colors hover:bg-muted"
                                 >
-                                    Single Exercise
+                                    Practice
+                                </NavigationMenuLink>
+                                <NavigationMenuLink 
+                                    href="/dashboard/exams"
+                                    className="px-3 py-2 rounded-md transition-colors hover:bg-muted"
+                                >
+                                    Exams
                                 </NavigationMenuLink>
                             </div>
                         </NavigationMenuContent>
@@ -94,7 +100,7 @@ export default function Navbar() {
         <div className="flex items-center gap-6">
             <DarkModeSwitch className="my-auto" />
             {loggedIn ? (
-                <Link href="/dashboard/profile">
+                <Link href="/dashboard">
                     <Avatar className="h-9 w-9 transition-transform hover:scale-105 ring-2 ring-background hover:ring-primary">
                         <AvatarImage
                             src={profilePicture.toDataUri()}
